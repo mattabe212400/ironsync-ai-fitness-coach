@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IronSync — AI Fitness Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+    GLOBAL: Toast notification
+  ============================================================ -->
+  <div class="toast toast--hidden" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ============================================================
+    GLOBAL: Log-Set Modal (used inside live tracker)
+  ============================================================ -->
+  <div class="modal-overlay modal-overlay--hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title" id="m-title">Log Set <span id="m-num">#1</span></h2>
+        <p class="modal-sub" id="m-exname">Barbell Bench Press</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="m-weight">Weight (lbs)</label>
+        <input class="form-input form-input--center" id="m-weight" type="number" value="225" min="0" step="5" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="m-reps">Reps</label>
+        <input class="form-input form-input--center" id="m-reps" type="number" value="5" min="1" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--primary" onclick="saveSet()">Save Set ✓</button>
+        <button class="btn btn--ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    SCREEN 1: LOGIN
+    Centered on all screen sizes. No sidebar.
+  ============================================================ -->
+  <div class="screen screen--active screen--centered" id="s-login">
+    <div class="login-page">
+      <!-- Decorative grid bg rendered via CSS pseudo -->
+      <div class="login-card-wrap">
+        <div class="login-brand">
+          <div class="brand-mark">
+            <!-- IronSync barbell SVG logo -->
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <rect x="2" y="15" width="9" height="10" rx="3" fill="#4f6ef7"/>
+              <rect x="15.5" y="5" width="9" height="30" rx="3" fill="#6c8fff"/>
+              <rect x="29" y="15" width="9" height="10" rx="3" fill="#4f6ef7"/>
+            </svg>
+          </div>
+          <h1 class="brand-name">IronSync</h1>
+          <p class="brand-tagline">AI-Powered Fitness Coach</p>
+        </div>
+
+        <div class="card login-form-card">
+          <div class="form-group">
+            <label class="form-label" for="li-email">Email</label>
+            <input class="form-input" id="li-email" type="email" placeholder="alex@university.edu" value="alex@university.edu" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="li-pass">Password</label>
+            <input class="form-input" id="li-pass" type="password" placeholder="••••••••" value="password" autocomplete="current-password" />
+          </div>
+          <button class="btn btn--primary btn--full" onclick="go('s-onboard')">Login</button>
+          <div class="divider"><span>or</span></div>
+          <button class="btn btn--demo btn--full" onclick="go('s-onboard')">✨ Try Demo — No Account Needed</button>
+          <p class="login-note">Demo uses sample data only · No real data collected</p>
+        </div>
+        <p class="login-footer">New to IronSync? <a href="#" onclick="go('s-onboard'); return false;">Create Account →</a></p>
+      </div>
+
+      <!-- Right panel — only visible on large screens -->
+      <div class="login-panel-right" aria-hidden="true">
+        <div class="login-panel-content">
+          <div class="panel-quote">"The best fitness app I never shipped."</div>
+          <div class="panel-features">
+            <div class="panel-feature"><span class="panel-icon">📈</span><span>Track every PR automatically</span></div>
+            <div class="panel-feature"><span class="panel-icon">🤖</span><span>Adaptive AI coaching</span></div>
+            <div class="panel-feature"><span class="panel-icon">⚡</span><span>Recovery-aware programming</span></div>
+            <div class="panel-feature"><span class="panel-icon">🏆</span><span>Compete with your gym</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    SCREEN 2: GOAL ONBOARDING
+  ============================================================ -->
+  <div class="screen screen--centered" id="s-onboard">
+    <div class="onboard-wrap">
+      <div class="step-indicator">
+        <span class="step-dot step-dot--active"></span>
+        <span class="step-dot"></span>
+        <span class="step-dot"></span>
+      </div>
+      <h2 class="page-title">Select Your Goal</h2>
+      <p class="page-subtitle">We'll build a personalized 6-week program around it</p>
+
+      <div class="goal-grid" id="goal-grid">
+        <div class="goal-card" data-g="strength" onclick="pickGoal(this)">
+          <span class="goal-icon">💪</span>
+          <div><span class="goal-name">Strength</span><span class="goal-desc">Maximize your 1-rep max lifts</span></div>
+        </div>
+        <div class="goal-card" data-g="hypertrophy" onclick="pickGoal(this)">
+          <span class="goal-icon">🏋️</span>
+          <div><span class="goal-name">Muscle (Hypertrophy)</span><span class="goal-desc">Build lean muscle mass</span></div>
+        </div>
+        <div class="goal-card" data-g="fatloss" onclick="pickGoal(this)">
+          <span class="goal-icon">🔥</span>
+          <div><span class="goal-name">Fat Loss</span><span class="goal-desc">Burn fat while keeping muscle</span></div>
+        </div>
+        <div class="goal-card" data-g="endurance" onclick="pickGoal(this)">
+          <span class="goal-icon">🏃</span>
+          <div><span class="goal-name">Endurance</span><span class="goal-desc">Build cardiovascular fitness</span></div>
+        </div>
+      </div>
+      <button class="btn btn--primary btn--wide" id="goal-btn" onclick="go('s-program')" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    SCREEN 3: PROGRAM READY
+  ============================================================ -->
+  <div class="screen screen--centered" id="s-program">
+    <div class="program-ready-wrap">
+      <div class="sparkle-anim" aria-hidden="true">✨</div>
+      <h2 class="page-title">Your Program is Ready</h2>
+      <p class="page-subtitle" id="prog-sub">Optimized for Strength Building</p>
+
+      <div class="card program-split-card">
+        <h3 class="card-title">6-Week Weekly Split</h3>
+        <div class="split-table">
+          <div class="split-row"><span class="split-day">Monday</span><span class="split-type split-type--work">Heavy Compound</span></div>
+          <div class="split-row"><span class="split-day">Tuesday</span><span class="split-type split-type--rest">Rest / Mobility</span></div>
+          <div class="split-row"><span class="split-day">Wednesday</span><span class="split-type split-type--work">Power Lifting</span></div>
+          <div class="split-row"><span class="split-day">Thursday</span><span class="split-type split-type--rest">Rest / Active Recovery</span></div>
+          <div class="split-row"><span class="split-day">Friday</span><span class="split-type split-type--work">Max Effort</span></div>
+          <div class="split-row"><span class="split-day">Saturday</span><span class="split-type split-type--rest">Rest</span></div>
+          <div class="split-row"><span class="split-day">Sunday</span><span class="split-type split-type--rest">Rest</span></div>
+        </div>
+      </div>
+      <button class="btn btn--primary btn--wide" onclick="go('s-dash')">Start Program →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    SCREENS 4–11: AUTHENTICATED APP
+    These screens share the app shell: sidebar + main content area.
+  ============================================================ -->
+  <div class="app-shell screen" id="s-dash">
+    <!-- ── Sidebar (desktop only) ─────────────────────────────── -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-brand">
+        <div class="brand-mark brand-mark--sm">
+          <svg width="26" height="26" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <rect x="2" y="15" width="9" height="10" rx="3" fill="#4f6ef7"/>
+            <rect x="15.5" y="5" width="9" height="30" rx="3" fill="#6c8fff"/>
+            <rect x="29" y="15" width="9" height="10" rx="3" fill="#4f6ef7"/>
+          </svg>
+        </div>
+        <span class="sidebar-brand-name">IronSync</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="sidebar-link sidebar-link--active" data-screen="s-dash" onclick="go('s-dash')">
+          <span class="slink-icon">🏠</span><span class="slink-label">Dashboard</span>
+        </button>
+        <button class="sidebar-link" data-screen="s-plan" onclick="go('s-plan')">
+          <span class="slink-icon">📋</span><span class="slink-label">Workout Plan</span>
+        </button>
+        <button class="sidebar-link" data-screen="s-preworkout" onclick="go('s-preworkout')">
+          <span class="slink-icon">▶</span><span class="slink-label">Start Workout</span>
+        </button>
+        <button class="sidebar-link" data-screen="s-ai" onclick="go('s-ai')">
+          <span class="slink-icon">🤖</span><span class="slink-label">AI Coach</span>
+        </button>
+        <button class="sidebar-link" data-screen="s-progress" onclick="go('s-progress')">
+          <span class="slink-icon">📈</span><span class="slink-label">Progress</span>
+        </button>
+        <button class="sidebar-link" data-screen="s-lb" onclick="go('s-lb')">
+          <span class="slink-icon">🏆</span><span class="slink-label">Leaderboard</span>
+        </button>
+        <button class="sidebar-link" data-screen="s-profile" onclick="go('s-profile')">
+          <span class="slink-icon">👤</span><span class="slink-label">Profile</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar">AM</div>
+          <div class="sidebar-user-info">
+            <span class="sidebar-user-name">Alex Martinez</span>
+            <span class="sidebar-user-goal">Strength · Week 4/6</span>
+          </div>
+        </div>
+        <button class="btn btn--ghost btn--sm sidebar-logout" onclick="go('s-login')">Log out</button>
+      </div>
+    </aside>
+
+    <!-- ── Main content area (all app screens rendered here) ───── -->
+    <div class="main-area" id="main-area">
+
+      <!-- Mobile topbar (hidden on desktop) -->
+      <header class="mobile-topbar" id="mobile-topbar">
+        <div class="mobile-topbar-brand">
+          <svg width="18" height="18" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <rect x="2" y="15" width="9" height="10" rx="3" fill="#4f6ef7"/>
+            <rect x="15.5" y="5" width="9" height="30" rx="3" fill="#6c8fff"/>
+            <rect x="29" y="15" width="9" height="10" rx="3" fill="#4f6ef7"/>
+          </svg>
+          <span>IronSync</span>
+        </div>
+        <div class="mobile-topbar-right" id="mobile-topbar-right">
+          <button class="icon-btn" onclick="go('s-profile')" title="Profile">👤</button>
+        </div>
+      </header>
+
+      <!-- Page: Dashboard -->
+      <div class="page page--active" id="page-dash">
+        <div class="page-header">
+          <div>
+            <p class="page-header-sub">Thursday · May 2026</p>
+            <h1 class="page-header-title">Good morning, Alex 👋</h1>
+          </div>
+          <div class="streak-badge">
+            <span class="streak-fire">🔥</span>
+            <span class="streak-count">12</span>
+            <span class="streak-label">day streak</span>
+          </div>
+        </div>
+
+        <!-- Top row: hero workout + stat cards -->
+        <div class="dash-top-row">
+          <div class="hero-workout-card" onclick="go('s-preworkout')" role="button" tabindex="0">
+            <div class="hero-bg" aria-hidden="true"></div>
+            <div class="hero-content">
+              <p class="hero-label">Today's Workout</p>
+              <h2 class="hero-name">Push Day 💪</h2>
+              <p class="hero-meta">5 exercises · ~55 min · Intermediate</p>
+              <button class="btn btn--primary btn--sm hero-start-btn">Start Workout →</button>
+            </div>
+          </div>
+
+          <div class="dash-stats-col">
+            <div class="stat-card">
+              <span class="stat-num">4</span>
+              <span class="stat-label">Workouts<br>This Week</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-num">78<span class="stat-unit">%</span></span>
+              <span class="stat-label">Recovery<br>Score</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-num">12<span class="stat-fire">🔥</span></span>
+              <span class="stat-label">Day<br>Streak</span>
+            </div>
+            <div class="stat-card stat-card--accent">
+              <span class="stat-num">245<span class="stat-unit">lbs</span></span>
+              <span class="stat-label">Bench<br>Press PR</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle row: weekly progress + recovery + AI tip -->
+        <div class="dash-mid-row">
+          <!-- Weekly progress -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Weekly Progress</h3>
+              <span class="badge">4 / 5 workouts</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width: 80%"></div>
+            </div>
+            <div class="week-dots-row">
+              <div class="week-dot-item"><span class="wdi-label">M</span><div class="wdi-dot wdi-dot--done"></div></div>
+              <div class="week-dot-item"><span class="wdi-label">T</span><div class="wdi-dot wdi-dot--done"></div></div>
+              <div class="week-dot-item"><span class="wdi-label">W</span><div class="wdi-dot wdi-dot--done"></div></div>
+              <div class="week-dot-item"><span class="wdi-label">Th</span><div class="wdi-dot wdi-dot--today"></div></div>
+              <div class="week-dot-item"><span class="wdi-label">F</span><div class="wdi-dot wdi-dot--done"></div></div>
+              <div class="week-dot-item"><span class="wdi-label">Sa</span><div class="wdi-dot wdi-dot--rest"></div></div>
+              <div class="week-dot-item"><span class="wdi-label">Su</span><div class="wdi-dot wdi-dot--rest"></div></div>
+            </div>
+          </div>
+
+          <!-- Recovery score -->
+          <div class="card recovery-card">
+            <div class="recovery-left">
+              <h3 class="card-title">Recovery Score</h3>
+              <div class="recovery-score">78<span class="recovery-unit">%</span></div>
+              <p class="recovery-status recovery-status--good">✓ Good to train hard today</p>
+              <button class="btn btn--outline btn--sm mt-10" onclick="go('s-preworkout')">Update Check-in</button>
+            </div>
+            <div class="recovery-ring-wrap" aria-hidden="true">
+              <svg width="90" height="90" viewBox="0 0 90 90">
+                <circle cx="45" cy="45" r="36" fill="none" stroke="var(--input)" stroke-width="9"/>
+                <circle cx="45" cy="45" r="36" fill="none" stroke="var(--blue)" stroke-width="9"
+                  stroke-dasharray="226" stroke-dashoffset="50" stroke-linecap="round"
+                  transform="rotate(-90 45 45)"/>
+              </svg>
+              <span class="ring-label">78%</span>
+            </div>
+          </div>
+
+          <!-- AI tip -->
+          <div class="card ai-tip-card">
+            <span class="ai-badge">🤖 AI Coach</span>
+            <p class="ai-tip-text">"Your bench press improved 15% this month. Add a 5th set today to capitalize on your current strength trajectory."</p>
+            <button class="btn btn--outline btn--sm" onclick="go('s-ai')">View Full Recommendation →</button>
+          </div>
+        </div>
+
+        <!-- Bottom row: next exercises preview -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Today's Exercises — Push Day</h3>
+            <button class="btn btn--ghost btn--sm" onclick="go('s-plan')">Full Plan →</button>
+          </div>
+          <div class="exercise-preview-grid">
+            <div class="ex-preview-item"><span class="ex-preview-num">1</span><span class="ex-preview-name">Barbell Bench Press</span><span class="ex-preview-detail">4×5 @ 225 lbs</span><span class="ex-preview-tag">Chest</span></div>
+            <div class="ex-preview-item"><span class="ex-preview-num">2</span><span class="ex-preview-name">Overhead Press</span><span class="ex-preview-detail">3×6 @ 135 lbs</span><span class="ex-preview-tag">Shoulders</span></div>
+            <div class="ex-preview-item"><span class="ex-preview-num">3</span><span class="ex-preview-name">Incline DB Press</span><span class="ex-preview-detail">3×8 @ 65 lbs</span><span class="ex-preview-tag">Upper Chest</span></div>
+            <div class="ex-preview-item"><span class="ex-preview-num">4</span><span class="ex-preview-name">Tricep Pushdown</span><span class="ex-preview-detail">3×12 @ 70 lbs</span><span class="ex-preview-tag">Triceps</span></div>
+            <div class="ex-preview-item"><span class="ex-preview-num">5</span><span class="ex-preview-name">Lateral Raises</span><span class="ex-preview-detail">3×15 @ 25 lbs</span><span class="ex-preview-tag">Delts</span></div>
+          </div>
+        </div>
+      </div><!-- /page-dash -->
+
+      <!-- ══════════════════════════════════════════
+           Page: Workout Plan
+      ══════════════════════════════════════════ -->
+      <div class="page" id="page-plan">
+        <div class="page-header">
+          <div>
+            <h1 class="page-header-title">Workout Plan</h1>
+            <p class="page-header-sub">Week 4 of 6 · Strength Program</p>
+          </div>
+          <button class="btn btn--primary" onclick="go('s-preworkout')">Start Today's Session →</button>
+        </div>
+
+        <div class="plan-layout">
+          <!-- Day cards column -->
+          <div class="plan-days-col">
+            <div class="day-card day-card--today" onclick="go('s-preworkout')">
+              <div class="day-card-left">
+                <span class="day-badge day-badge--today">TODAY</span>
+                <h3 class="day-card-name">Push Day</h3>
+                <p class="day-card-meta">Bench · OHP · Triceps · 5 exercises</p>
+              </div>
+              <div class="day-card-right">
+                <span class="day-card-time">~55 min</span>
+                <span class="day-card-arrow">→</span>
+              </div>
+            </div>
+            <div class="day-card day-card--done">
+              <div class="day-card-left">
+                <span class="day-badge day-badge--done">✓ DONE</span>
+                <h3 class="day-card-name">Pull Day</h3>
+                <p class="day-card-meta">Deadlift · Rows · Biceps · 5 exercises</p>
+              </div>
+              <div class="day-card-right"><span class="day-card-time">52 min</span><span class="day-card-check">✓</span></div>
+            </div>
+            <div class="day-card day-card--rest">
+              <div class="day-card-left">
+                <span class="day-badge day-badge--rest">REST</span>
+                <h3 class="day-card-name">Active Recovery</h3>
+                <p class="day-card-meta">Light walk · Stretching · Mobility</p>
+              </div>
+              <div class="day-card-right"><span class="day-card-time">—</span></div>
+            </div>
+            <div class="day-card day-card--done">
+              <div class="day-card-left">
+                <span class="day-badge day-badge--done">✓ DONE</span>
+                <h3 class="day-card-name">Leg Day</h3>
+                <p class="day-card-meta">Squat · Leg Press · Lunges · 5 exercises</p>
+              </div>
+              <div class="day-card-right"><span class="day-card-time">60 min</span><span class="day-card-check">✓</span></div>
+            </div>
+            <div class="day-card">
+              <div class="day-card-left">
+                <span class="day-badge day-badge--upcoming">UPCOMING</span>
+                <h3 class="day-card-name">Upper Strength</h3>
+                <p class="day-card-meta">Barbell · Cable · Compound · 6 exercises</p>
+              </div>
+              <div class="day-card-right"><span class="day-card-time">~60 min</span></div>
+            </div>
+          </div>
+
+          <!-- Exercise breakdown panel -->
+          <div class="card plan-detail-panel">
+            <h3 class="card-title">Push Day — Full Exercise Breakdown</h3>
+            <div class="exercise-table">
+              <div class="exercise-table-header">
+                <span>#</span><span>Exercise</span><span>Target</span><span>Rest</span><span>Muscle</span>
+              </div>
+              <div class="exercise-table-row">
+                <span class="ex-num-badge">1</span>
+                <div class="ex-info"><span class="ex-name">Barbell Bench Press</span><span class="ex-eq">Barbell</span></div>
+                <span class="ex-target">4 × 5 @ 225 lbs</span>
+                <span class="ex-rest-time">3 min</span>
+                <span class="muscle-tag">Chest</span>
+              </div>
+              <div class="exercise-table-row">
+                <span class="ex-num-badge">2</span>
+                <div class="ex-info"><span class="ex-name">Overhead Press</span><span class="ex-eq">Barbell</span></div>
+                <span class="ex-target">3 × 6 @ 135 lbs</span>
+                <span class="ex-rest-time">2 min</span>
+                <span class="muscle-tag">Shoulders</span>
+              </div>
+              <div class="exercise-table-row">
+                <span class="ex-num-badge">3</span>
+                <div class="ex-info"><span class="ex-name">Incline DB Press</span><span class="ex-eq">Dumbbells</span></div>
+                <span class="ex-target">3 × 8 @ 65 lbs ea.</span>
+                <span class="ex-rest-time">2 min</span>
+                <span class="muscle-tag">Upper Chest</span>
+              </div>
+              <div class="exercise-table-row">
+                <span class="ex-num-badge">4</span>
+                <div class="ex-info"><span class="ex-name">Tricep Pushdown</span><span class="ex-eq">Cable</span></div>
+                <span class="ex-target">3 × 12 @ 70 lbs</span>
+                <span class="ex-rest-time">90 sec</span>
+                <span class="muscle-tag">Triceps</span>
+              </div>
+              <div class="exercise-table-row">
+                <span class="ex-num-badge">5</span>
+                <div class="ex-info"><span class="ex-name">Lateral Raises</span><span class="ex-eq">Dumbbells</span></div>
+                <span class="ex-target">3 × 15 @ 25 lbs ea.</span>
+                <span class="ex-rest-time">60 sec</span>
+                <span class="muscle-tag">Delts</span>
+              </div>
+            </div>
+            <button class="btn btn--primary mt-16" onclick="go('s-preworkout')">Start Push Day →</button>
+          </div>
+        </div>
+      </div><!-- /page-plan -->
+
+      <!-- ══════════════════════════════════════════
+           Page: Pre-Workout Check
+      ══════════════════════════════════════════ -->
+      <div class="page" id="page-preworkout">
+        <div class="page-header">
+          <div>
+            <h1 class="page-header-title">Pre-Workout Check</h1>
+            <p class="page-header-sub">Help us optimize your workout intensity today</p>
+          </div>
+        </div>
+
+        <div class="preworkout-layout">
+          <div class="card sliders-card">
+            <h3 class="card-title">How do you feel today?</h3>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label class="slider-label" for="sl-sleep">😴 Sleep Quality</label>
+                <span class="slider-value" id="sv-sleep">7 / 10</span>
+              </div>
+              <input type="range" class="custom-range" id="sl-sleep" min="1" max="10" value="7"
+                oninput="slUpdate('sleep', this.value)" aria-label="Sleep quality" />
+              <div class="slider-ends"><span>Poor</span><span>Excellent</span></div>
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label class="slider-label" for="sl-sore">💪 Muscle Soreness</label>
+                <span class="slider-value" id="sv-sore">5 / 10</span>
+              </div>
+              <input type="range" class="custom-range" id="sl-sore" min="1" max="10" value="5"
+                oninput="slUpdate('sore', this.value)" aria-label="Muscle soreness" />
+              <div class="slider-ends"><span>None</span><span>Very Sore</span></div>
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-header">
+                <label class="slider-label" for="sl-energy">⚡ Energy Level</label>
+                <span class="slider-value" id="sv-energy">8 / 10</span>
+              </div>
+              <input type="range" class="custom-range" id="sl-energy" min="1" max="10" value="8"
+                oninput="slUpdate('energy', this.value)" aria-label="Energy level" />
+              <div class="slider-ends"><span>Exhausted</span><span>Energized</span></div>
+            </div>
+          </div>
+
+          <div class="preworkout-right-col">
+            <div class="card recovery-result-card">
+              <p class="rr-label">Recovery Score</p>
+              <div class="rr-score" id="rc-score">78%</div>
+              <p class="rr-status rr-status--good" id="rc-status">✓ Ready to train at full intensity</p>
+              <div class="rr-bars">
+                <div class="rr-bar-item">
+                  <span class="rr-bar-label">Sleep</span>
+                  <div class="progress-bar-wrap"><div class="progress-bar" id="rr-bar-sleep" style="width:70%"></div></div>
+                </div>
+                <div class="rr-bar-item">
+                  <span class="rr-bar-label">Energy</span>
+                  <div class="progress-bar-wrap"><div class="progress-bar" id="rr-bar-energy" style="width:80%"></div></div>
+                </div>
+                <div class="rr-bar-item">
+                  <span class="rr-bar-label">Freshness</span>
+                  <div class="progress-bar-wrap"><div class="progress-bar" id="rr-bar-fresh" style="width:50%"></div></div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn--primary btn--full" onclick="go('s-live')">Start Workout →</button>
+          </div>
+        </div>
+      </div><!-- /page-preworkout -->
+
+      <!-- ══════════════════════════════════════════
+           Page: Live Workout Tracker
+      ══════════════════════════════════════════ -->
+      <div class="page" id="page-live">
+        <div class="page-header">
+          <div>
+            <h1 class="page-header-title">Live Tracking</h1>
+            <p class="page-header-sub">Push Day · 5 exercises</p>
+          </div>
+          <div class="workout-timer-badge">
+            <span class="timer-icon">⏱</span>
+            <span class="timer-display" id="wt-display">00:00</span>
+          </div>
+        </div>
+
+        <div class="live-layout">
+          <!-- Left: exercise nav + set logging -->
+          <div class="live-main-col">
+            <!-- Exercise pills -->
+            <div class="exercise-pills" id="expills">
+              <button class="ex-pill ex-pill--active" onclick="swEx(0)">1. Bench Press</button>
+              <button class="ex-pill" onclick="swEx(1)">2. OHP</button>
+              <button class="ex-pill" onclick="swEx(2)">3. Incline DB</button>
+              <button class="ex-pill" onclick="swEx(3)">4. Pushdown</button>
+              <button class="ex-pill" onclick="swEx(4)">5. Laterals</button>
+            </div>
+
+            <!-- Current exercise card -->
+            <div class="card">
+              <h2 class="ex-big-name" id="ex-name">Barbell Bench Press</h2>
+              <p class="ex-big-meta" id="ex-meta">Barbell · Exercise 1 of 5</p>
+              <div class="ex-chip-row">
+                <span class="chip" id="ex-target">Target: 4×5 @ 225 lbs</span>
+                <span class="chip" id="ex-rest-chip">Rest: 3 min</span>
+              </div>
+            </div>
+
+            <!-- Sets table -->
+            <div class="card">
+              <div class="sets-table-header">
+                <span>Set</span><span>Weight (lbs)</span><span>Reps</span><span>Status</span>
+              </div>
+              <div id="sets-list"></div>
+              <p class="sets-empty" id="sets-empty">No sets logged yet — add your first set!</p>
+            </div>
+
+            <!-- Previous best -->
+            <div class="card card--green-tint">
+              <p class="prev-label">📊 Previous Best (last session)</p>
+              <p class="prev-value" id="prev-best">4 sets · 220 lbs · 5 reps avg</p>
+            </div>
+
+            <!-- Rest timer -->
+            <div class="rest-timer hidden" id="rest-bar">
+              <span>⏱ Rest:</span>
+              <span class="rest-count" id="rest-count">3:00</span>
+              <button class="skip-rest-btn" onclick="skipRest()">Skip →</button>
+            </div>
+
+            <div class="live-action-row">
+              <button class="btn btn--primary" onclick="openModal()">+ Log Set</button>
+              <button class="btn btn--ghost" onclick="finishWo()">Finish Workout ✓</button>
+            </div>
+          </div>
+
+          <!-- Right: live session stats -->
+          <div class="live-stats-col">
+            <div class="card">
+              <h3 class="card-title">Session Stats</h3>
+              <div class="session-stats">
+                <div class="session-stat">
+                  <span class="ss-value" id="wstat-time">00:00</span>
+                  <span class="ss-label">Duration</span>
+                </div>
+                <div class="session-stat">
+                  <span class="ss-value" id="wstat-sets">0</span>
+                  <span class="ss-label">Sets Done</span>
+                </div>
+                <div class="session-stat">
+                  <span class="ss-value" id="wstat-vol">0</span>
+                  <span class="ss-label">Volume (lbs)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="card-title">Today's Exercises</h3>
+              <div class="live-ex-list" id="live-ex-list">
+                <div class="live-ex-item live-ex-item--active" onclick="swEx(0)"><span class="lex-num">1</span><span class="lex-name">Bench Press</span><span class="lex-status" id="lex-0">–</span></div>
+                <div class="live-ex-item" onclick="swEx(1)"><span class="lex-num">2</span><span class="lex-name">Overhead Press</span><span class="lex-status" id="lex-1">–</span></div>
+                <div class="live-ex-item" onclick="swEx(2)"><span class="lex-num">3</span><span class="lex-name">Incline DB</span><span class="lex-status" id="lex-2">–</span></div>
+                <div class="live-ex-item" onclick="swEx(3)"><span class="lex-num">4</span><span class="lex-name">Pushdown</span><span class="lex-status" id="lex-3">–</span></div>
+                <div class="live-ex-item" onclick="swEx(4)"><span class="lex-num">5</span><span class="lex-name">Laterals</span><span class="lex-status" id="lex-4">–</span></div>
+              </div>
+            </div>
+
+            <div class="card ai-tip-card">
+              <span class="ai-badge">🤖 AI Coach</span>
+              <p class="ai-tip-text" id="live-ai-tip">"Strong start. Hit all your target reps on set 1 before considering a weight increase."</p>
+            </div>
+          </div>
+        </div>
+      </div><!-- /page-live -->
+
+      <!-- ══════════════════════════════════════════
+           Page: AI Coach
+      ══════════════════════════════════════════ -->
+      <div class="page" id="page-ai">
+        <div class="page-header">
+          <div>
+            <h1 class="page-header-title">AI Coach</h1>
+            <p class="page-header-sub">Adaptive recommendations based on your last 3 sessions</p>
+          </div>
+        </div>
+
+        <div class="ai-layout">
+          <!-- Main recommendation -->
+          <div class="ai-main-col">
+            <div class="card ai-rec-card">
+              <div class="ai-rec-header">
+                <span class="ai-rec-icon">🎯</span>
+                <div>
+                  <h2 class="ai-rec-title">Great Job!</h2>
+                  <p class="ai-rec-sub">Based on your last 3 sessions</p>
+                </div>
+              </div>
+              <div class="ai-rec-box">
+                <p class="ai-rec-text">Increase bench press weight by <strong>5 lbs</strong> next set</p>
+              </div>
+              <div class="ai-rec-actions">
+                <button class="btn btn--success" onclick="toast('✓ Plan updated with +5 lbs on bench!')">✓ Accept</button>
+                <button class="btn btn--ghost" onclick="toast('Recommendation ignored for this session')">Ignore</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="card-title">Weekly Insights</h3>
+              <div class="insights-list">
+                <div class="insight insight--positive"><span class="insight-icon">📈</span><div><p class="insight-main">Bench press up 15% this month</p><p class="insight-detail">Progressive overload is working — keep it up</p></div></div>
+                <div class="insight insight--warning"><span class="insight-icon">😴</span><div><p class="insight-main">Sleep quality dipped mid-week</p><p class="insight-detail">Consider reducing volume on low-sleep days</p></div></div>
+                <div class="insight insight--positive"><span class="insight-icon">🔥</span><div><p class="insight-main">12-day streak maintained</p><p class="insight-detail">Consistency is the #1 predictor of long-term gains</p></div></div>
+                <div class="insight insight--neutral"><span class="insight-icon">⚖️</span><div><p class="insight-main">Push/pull volume balance: healthy</p><p class="insight-detail">Push/pull ratio is 1.1:1 — right on target</p></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next week adjustments -->
+          <div class="ai-right-col">
+            <div class="card">
+              <h3 class="card-title">Next Week Adjustments</h3>
+              <div class="adj-table">
+                <div class="adj-row adj-row--header"><span>Exercise</span><span>Change</span></div>
+                <div class="adj-row"><span class="adj-ex">Bench Press</span><span class="adj-up">+5 lbs</span></div>
+                <div class="adj-row"><span class="adj-ex">Overhead Press</span><span class="adj-up">+2.5 lbs</span></div>
+                <div class="adj-row"><span class="adj-ex">Squat</span><span class="adj-hold">Hold weight</span></div>
+                <div class="adj-row"><span class="adj-ex">Deadlift</span><span class="adj-up">+10 lbs</span></div>
+                <div class="adj-row"><span class="adj-ex">Incline Press</span><span class="adj-up">+5 lbs</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="card-title">Volume Analysis</h3>
+              <div class="volume-analysis">
+                <div class="va-item"><span class="va-label">Chest</span><div class="progress-bar-wrap"><div class="progress-bar" style="width:72%"></div></div><span class="va-val">18 sets</span></div>
+                <div class="va-item"><span class="va-label">Back</span><div class="progress-bar-wrap"><div class="progress-bar" style="width:64%"></div></div><span class="va-val">16 sets</span></div>
+                <div class="va-item"><span class="va-label">Legs</span><div class="progress-bar-wrap"><div class="progress-bar" style="width:80%"></div></div><span class="va-val">20 sets</span></div>
+                <div class="va-item"><span class="va-label">Shoulders</span><div class="progress-bar-wrap"><div class="progress-bar" style="width:48%"></div></div><span class="va-val">12 sets</span></div>
+              </div>
+            </div>
+
+            <button class="btn btn--primary btn--full" onclick="go('s-preworkout')">Start Today's Workout →</button>
+          </div>
+        </div>
+      </div><!-- /page-ai -->
+
+      <!-- ══════════════════════════════════════════
+           Page: Progress Analytics
+      ══════════════════════════════════════════ -->
+      <div class="page" id="page-progress">
+        <div class="page-header">
+          <div>
+            <h1 class="page-header-title">Progress Analytics</h1>
+            <p class="page-header-sub">May 2026 · 6-Week Strength Program</p>
+          </div>
+        </div>
+
+        <!-- Summary stat cards -->
+        <div class="stats-4-grid">
+          <div class="stat-card stat-card--wide"><span class="stat-num">12,450<span class="stat-unit">lbs</span></span><span class="stat-label">Total Volume This Week</span></div>
+          <div class="stat-card stat-card--wide"><span class="stat-num">24</span><span class="stat-label">Workouts Completed</span></div>
+          <div class="stat-card stat-card--wide"><span class="stat-num">5</span><span class="stat-label">New PRs This Month</span></div>
+          <div class="stat-card stat-card--wide"><span class="stat-num">78<span class="stat-unit">%</span></span><span class="stat-label">Avg. Recovery Score</span></div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="progress-charts-row">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title" id="chart-title">Bench Press Progress</h3>
+              <div class="ex-pills-sm" id="prog-pills">
+                <button class="ex-pill ex-pill--active ex-pill--sm" onclick="swChart('bench',this)">Bench</button>
+                <button class="ex-pill ex-pill--sm" onclick="swChart('squat',this)">Squat</button>
+                <button class="ex-pill ex-pill--sm" onclick="swChart('deadlift',this)">Deadlift</button>
+                <button class="ex-pill ex-pill--sm" onclick="swChart('ohp',this)">OHP</button>
+              </div>
+            </div>
+            <canvas id="prog-chart" height="160"></canvas>
+            <div class="pr-box">
+              <p class="pr-label">Personal Record</p>
+              <p class="pr-value" id="pr-val">245 lbs</p>
+              <p class="pr-delta" id="pr-delta">+60 lbs from start 🎉</p>
+            </div>
+          </div>
+
+          <div class="card chart-card">
+            <h3 class="card-title">Volume by Muscle Group</h3>
+            <canvas id="muscle-chart" height="160"></canvas>
+          </div>
+        </div>
+
+        <!-- Monthly summary table -->
+        <div class="card">
+          <h3 class="card-title">May 2026 Summary</h3>
+          <div class="monthly-grid">
+            <div class="monthly-cell"><span class="mc-num">5</span><span class="mc-label">New PRs</span></div>
+            <div class="monthly-cell"><span class="mc-num">18</span><span class="mc-label">Workouts</span></div>
+            <div class="monthly-cell"><span class="mc-num">48h</span><span class="mc-label">Total Training Time</span></div>
+            <div class="monthly-cell"><span class="mc-num">78%</span><span class="mc-label">Avg Recovery</span></div>
+            <div class="monthly-cell"><span class="mc-num">124,500<span style="font-size:.7em">lbs</span></span><span class="mc-label">Total Volume</span></div>
+            <div class="monthly-cell"><span class="mc-num">+60<span style="font-size:.7em">lbs</span></span><span class="mc-label">Bench PR Gain</span></div>
+          </div>
+        </div>
+      </div><!-- /page-progress -->
+
+      <!-- ══════════════════════════════════════════
+           Page: Leaderboard
+      ══════════════════════════════════════════ -->
+      <div class="page" id="page-lb">
+        <div class="page-header">
+          <div>
+            <h1 class="page-header-title">Leaderboard</h1>
+            <p class="page-header-sub" id="lb-sub">Most workouts this week · University Fitness</p>
+          </div>
+          <div class="lb-tabs">
+            <button class="lb-tab lb-tab--active" onclick="swLb('weekly',this)">Weekly</button>
+            <button class="lb-tab" onclick="swLb('monthly',this)">Monthly</button>
+            <button class="lb-tab" onclick="swLb('alltime',this)">All Time</button>
+          </div>
+        </div>
+
+        <div class="lb-layout">
+          <!-- Left: podium + list -->
+          <div class="lb-main-col">
+            <!-- Podium -->
+            <div class="podium-row" aria-label="Top 3">
+              <div class="podium-item podium-item--second">
+                <div class="podium-avatar">JS</div>
+                <p class="podium-name">John S.</p>
+                <p class="podium-score">10 workouts</p>
+                <div class="podium-block podium-block--2">2</div>
+              </div>
+              <div class="podium-item podium-item--first">
+                <div class="podium-avatar podium-avatar--gold">MJ</div>
+                <p class="podium-name">Mike J.</p>
+                <p class="podium-score">12 workouts</p>
+                <div class="podium-block podium-block--1">1 🏆</div>
+              </div>
+              <div class="podium-item podium-item--third">
+                <div class="podium-avatar podium-avatar--bronze">SW</div>
+                <p class="podium-name">Sarah W.</p>
+                <p class="podium-score">9 workouts</p>
+                <div class="podium-block podium-block--3">3</div>
+              </div>
+            </div>
+
+            <!-- Full list -->
+            <div class="card lb-list">
+              <div class="lb-row"><span class="lb-rank">1</span><div class="lb-av">MJ</div><div class="lb-info"><span class="lb-name">Mike Johnson</span><span class="lb-detail">12 workouts · 48,200 lbs volume</span></div><span class="lb-medal">🥇</span></div>
+              <div class="lb-row"><span class="lb-rank">2</span><div class="lb-av">JS</div><div class="lb-info"><span class="lb-name">John Smith</span><span class="lb-detail">10 workouts · 41,500 lbs volume</span></div><span class="lb-medal">🥈</span></div>
+              <div class="lb-row"><span class="lb-rank">3</span><div class="lb-av">SW</div><div class="lb-info"><span class="lb-name">Sarah Williams</span><span class="lb-detail">9 workouts · 38,900 lbs volume</span></div><span class="lb-medal">🥉</span></div>
+              <div class="lb-row lb-row--you"><span class="lb-rank lb-rank--you">4</span><div class="lb-av lb-av--you">AM</div><div class="lb-info"><span class="lb-name lb-name--you">You (Alex M.)</span><span class="lb-detail">8 workouts · 34,100 lbs volume</span></div><span class="lb-you-badge">YOU</span></div>
+              <div class="lb-row"><span class="lb-rank">5</span><div class="lb-av">CD</div><div class="lb-info"><span class="lb-name">Chris Davis</span><span class="lb-detail">7 workouts · 29,600 lbs volume</span></div><span></span></div>
+              <div class="lb-row"><span class="lb-rank">6</span><div class="lb-av">JL</div><div class="lb-info"><span class="lb-name">Jordan Lee</span><span class="lb-detail">6 workouts · 25,800 lbs volume</span></div><span></span></div>
+            </div>
+          </div>
+
+          <!-- Right: motivation + your rank -->
+          <div class="lb-right-col">
+            <div class="card motivation-card">
+              <p class="motiv-text">🎯 Keep pushing! <strong>4 more workouts</strong> to reach #1 this week.</p>
+              <div class="progress-bar-wrap mt-10"><div class="progress-bar progress-bar--green" style="width:66%"></div></div>
+              <p class="motiv-sub">8 of 12 workouts needed</p>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Your Stats</h3>
+              <div class="your-stats">
+                <div class="ys-item"><span class="ys-label">Current Rank</span><span class="ys-val">#4</span></div>
+                <div class="ys-item"><span class="ys-label">This Week's Workouts</span><span class="ys-val">8</span></div>
+                <div class="ys-item"><span class="ys-label">Total Volume</span><span class="ys-val">34,100 lbs</span></div>
+                <div class="ys-item"><span class="ys-label">Gap to #1</span><span class="ys-val">4 workouts</span></div>
+              </div>
+            </div>
+            <button class="btn btn--primary btn--full" onclick="go('s-preworkout')">Start a Workout →</button>
+          </div>
+        </div>
+      </div><!-- /page-lb -->
+
+      <!-- ══════════════════════════════════════════
+           Page: Profile / Settings
+      ══════════════════════════════════════════ -->
+      <div class="page" id="page-profile">
+        <div class="page-header">
+          <div>
+            <h1 class="page-header-title">Profile</h1>
+            <p class="page-header-sub">Member since January 2026</p>
+          </div>
+        </div>
+
+        <div class="profile-layout">
+          <!-- Left: profile card + account settings -->
+          <div class="profile-main-col">
+            <div class="card profile-hero-card">
+              <div class="profile-avatar">AM</div>
+              <div class="profile-info">
+                <h2 class="profile-name">Alex Martinez</h2>
+                <p class="profile-since">Member since January 2026</p>
+                <span class="profile-goal-tag">🎯 Strength · Week 4 of 6</span>
+              </div>
+              <button class="btn btn--ghost btn--sm" onclick="toast('Edit Profile (demo only)')">Edit Profile</button>
+            </div>
+
+            <div class="card">
+              <h3 class="card-title">Stats</h3>
+              <div class="profile-stats-table">
+                <div class="pst-row"><span class="pst-label">Total Volume Lifted</span><span class="pst-value">124,500 lbs</span></div>
+                <div class="pst-row"><span class="pst-label">PRs This Month</span><span class="pst-value pst-value--green">5</span></div>
+                <div class="pst-row"><span class="pst-label">Avg. Recovery Score</span><span class="pst-value">78%</span></div>
+                <div class="pst-row"><span class="pst-label">Current Program</span><span class="pst-value">Strength Block</span></div>
+                <div class="pst-row"><span class="pst-label">Program Progress</span><span class="pst-value">Week 4 of 6</span></div>
+                <div class="pst-row"><span class="pst-label">Bench Press PR</span><span class="pst-value">245 lbs</span></div>
+              </div>
+            </div>
+
+            <div class="card achievement-card">
+              <div><p class="achv-label">Achievement Unlocked! 🎉</p><p class="achv-name">12-Day Streak Master</p></div>
+              <span class="achv-icon">🏅</span>
+            </div>
+
+            <button class="btn btn--danger btn--full" onclick="go('s-login')">Log Out</button>
+            <p class="demo-disclaimer">⚡ IronSync — Frontend MVP · MIS Portfolio Project · All data is sample/demo only</p>
+          </div>
+
+          <!-- Right: account settings + program complete -->
+          <div class="profile-right-col">
+            <div class="card">
+              <h3 class="card-title">Account</h3>
+              <button class="settings-btn" onclick="toast('Edit Profile (demo only)')"><span>Edit Profile</span><span class="settings-arrow">→</span></button>
+              <button class="settings-btn" onclick="toast('Notifications (demo only)')"><span>Notifications</span><span class="settings-arrow">→</span></button>
+              <button class="settings-btn" onclick="toast('Change Password (demo only)')"><span>Change Password</span><span class="settings-arrow">→</span></button>
+              <button class="settings-btn" onclick="toast('Privacy Policy (demo only)')"><span>Privacy Policy</span><span class="settings-arrow">→</span></button>
+            </div>
+
+            <div class="card program-complete-card">
+              <div class="pc-icon">🎉</div>
+              <h3 class="pc-title">Program Complete!</h3>
+              <p class="pc-sub">Congratulations on finishing your 6-week Strength program!</p>
+              <div class="pc-stats">
+                <div class="pc-stat"><span class="pc-num">24</span><span class="pc-label">Workouts</span></div>
+                <div class="pc-stat"><span class="pc-num">+60<span style="font-size:.6em">lbs</span></span><span class="pc-label">Bench PR</span></div>
+                <div class="pc-stat"><span class="pc-num">12</span><span class="pc-label">Day Streak</span></div>
+              </div>
+              <button class="btn btn--success btn--full mt-12" onclick="toast('Starting new program... (demo)')">Start New Program</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /page-profile -->
+
+    </div><!-- /main-area -->
+
+    <!-- Mobile bottom nav (hidden on desktop) -->
+    <nav class="mobile-bnav" role="navigation" aria-label="Mobile navigation">
+      <button class="bnav-btn bnav-btn--active" data-page="page-dash" onclick="swPage('page-dash')"><span class="bnav-icon">🏠</span><span class="bnav-label">Home</span></button>
+      <button class="bnav-btn" data-page="page-plan" onclick="swPage('page-plan')"><span class="bnav-icon">📋</span><span class="bnav-label">Plan</span></button>
+      <button class="bnav-btn bnav-play" onclick="swPage('page-preworkout')"><span class="bnav-icon bnav-icon--play">▶</span></button>
+      <button class="bnav-btn" data-page="page-progress" onclick="swPage('page-progress')"><span class="bnav-icon">📈</span><span class="bnav-label">Progress</span></button>
+      <button class="bnav-btn" data-page="page-profile" onclick="swPage('page-profile')"><span class="bnav-icon">👤</span><span class="bnav-label">Profile</span></button>
+    </nav>
+
+  </div><!-- /app-shell / s-dash -->
+
+  <script src="app.js"></script>
+</body>
+</html>
