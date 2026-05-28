@@ -88,17 +88,7 @@ ironsync/
 
 This project is deployed live on Vercel and can be viewed directly in the browser using the link above.
 
-### Local Development
 
-```bash
-python3 -m http.server 8080
-```
-
-Then visit:
-
-```txt
-http://localhost:8080
-```
 
 ---
 
