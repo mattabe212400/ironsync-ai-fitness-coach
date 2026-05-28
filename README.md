@@ -3,8 +3,6 @@
 > **Frontend MVP · MIS Portfolio Project · Demo data only**
 > Built from real coursework research, wireframes, and business model analysis.
 
-![IronSync Dashboard](assets/screenshots/dashboard.png)
-
 ---
 
 ## Overview
@@ -76,49 +74,21 @@ ironsync/
 ├── styles.css              # Full design system (desktop + mobile)
 ├── app.js                  # Navigation, interactivity, charts, state
 ├── README.md               # This file
-├── assets/
-│   └── screenshots/        # Add screenshots here for README embeds
 └── docs/
     └── product-background.md  # Product concept and research context
-```
 
 ---
 
-## Screenshots
+## Live Demo
 
-> *Screenshots below are placeholders. Run the project and capture your own.*
-
-| Screen | Preview |
-|---|---|
-| Login | `assets/screenshots/login.png` |
-| Goal Selection | `assets/screenshots/onboarding.png` |
-| Dashboard | `assets/screenshots/dashboard.png` |
-| Workout Plan | `assets/screenshots/plan.png` |
-| Live Tracker | `assets/screenshots/live.png` |
-| AI Coach | `assets/screenshots/ai-coach.png` |
-| Progress Analytics | `assets/screenshots/progress.png` |
-| Leaderboard | `assets/screenshots/leaderboard.png` |
-| Profile | `assets/screenshots/profile.png` |
+(https://ironsync-ai-fitness-coach.vercel.app/)
 
 ---
 
 ## Running the Project
 
-**Option 1 — Just open the file:**
-```bash
-open index.html
-# or double-click index.html in your file explorer
-```
+This project is deployed live on Vercel and can be viewed directly in the browser using the link above.
 
-**Option 2 — Local server (recommended for fonts):**
-```bash
-# Python
-python3 -m http.server 8080
-
-# Node (if you have npx)
-npx serve .
-```
-Then visit `http://localhost:8080`.
 
 **Demo keyboard shortcuts** (when not focused in a text input):
 
@@ -202,9 +172,8 @@ The purpose is to demonstrate **UI/UX design, frontend development, and product 
 
 ## Author
 
-**[Your Name]**
-MIS Student · [University Name] · Class of [Year]
-[LinkedIn](https://linkedin.com) · [GitHub](https://github.com) · [Email](mailto:you@email.com)
+**Matt Abraham**
+MIS Student · Iowa State · Class of 2028
 
 ---
 
