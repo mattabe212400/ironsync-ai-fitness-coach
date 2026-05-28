@@ -200,10 +200,8 @@ The purpose is to demonstrate **UI/UX design, frontend development, and product 
 
 ## Author
 
-**[Your Name]**
-MIS Student · [University Name] · Class of [Year]
-[LinkedIn](https://linkedin.com) · [GitHub](https://github.com) · [Email](mailto:you@email.com)
-
+**Matt Abraham**
+MIS Student · Iowa State University · Class of 2028
 ---
 
 *Built with too much pre-workout and not enough sleep.*
