@@ -74,29 +74,10 @@ ironsync/
 ├── styles.css              # Full design system (desktop + mobile)
 ├── app.js                  # Navigation, interactivity, charts, state
 ├── README.md               # This file
-├── assets/
-│   └── screenshots/        # Add screenshots here for README embeds
+│  
 └── docs/
     └── product-background.md  # Product concept and research context
 ```
-
----
-
-## Screenshots
-
-> *Screenshots below are placeholders. Run the project and capture your own.*
-
-| Screen | Preview |
-|---|---|
-| Login | `assets/screenshots/login.png` |
-| Goal Selection | `assets/screenshots/onboarding.png` |
-| Dashboard | `assets/screenshots/dashboard.png` |
-| Workout Plan | `assets/screenshots/plan.png` |
-| Live Tracker | `assets/screenshots/live.png` |
-| AI Coach | `assets/screenshots/ai-coach.png` |
-| Progress Analytics | `assets/screenshots/progress.png` |
-| Leaderboard | `assets/screenshots/leaderboard.png` |
-| Profile | `assets/screenshots/profile.png` |
 
 ---
 
