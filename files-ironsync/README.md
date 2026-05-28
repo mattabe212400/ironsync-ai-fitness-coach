@@ -3,8 +3,6 @@
 > **Frontend MVP · MIS Portfolio Project · Demo data only**
 > Built from real coursework research, wireframes, and business model analysis.
 
-![IronSync Dashboard](assets/screenshots/dashboard.png)
-
 ---
 
 ## Overview
