@@ -64,24 +64,23 @@ IronSync is a prototype of what a smarter, more personalized coaching experience
 
 **No build tools. No npm. No framework. Open `index.html` and it works.**
 
----
-
 ## Project Structure
 
-```
+```txt
 ironsync/
 ├── index.html              # All 11 screens and app shell
-├── styles.css              # Full design system (desktop + mobile)
+├── styles.css              # Full design system
 ├── app.js                  # Navigation, interactivity, charts, state
 ├── README.md               # This file
 └── docs/
-    └── product-background.md  # Product concept and research context
+    └── product-background.md
+```
 
 ---
 
 ## Live Demo
 
-(https://ironsync-ai-fitness-coach.vercel.app/)
+[View IronSync Live](https://ironsync-ai-fitness-coach.vercel.app/)
 
 ---
 
@@ -89,8 +88,21 @@ ironsync/
 
 This project is deployed live on Vercel and can be viewed directly in the browser using the link above.
 
+### Local Development
 
-**Demo keyboard shortcuts** (when not focused in a text input):
+```bash
+python3 -m http.server 8080
+```
+
+Then visit:
+
+```txt
+http://localhost:8080
+```
+
+---
+
+## Demo Keyboard Shortcuts
 
 | Key | Screen |
 |---|---|
@@ -106,7 +118,6 @@ This project is deployed live on Vercel and can be viewed directly in the browse
 | `0` | Leaderboard |
 | `Q` | Profile |
 | `Esc` | Close modal |
-
 ---
 
 ## Project Background
